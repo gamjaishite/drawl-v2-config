@@ -35,14 +35,13 @@ services:
     volumes:
       - '../clientspa:/app'
       - '/app/node_modules'
+      - '/app/dist'
     tty: true
   soapservice:
     build: ../soapservice
     restart: always
     ports:
       - "8082:8082"
-    volumes:
-      - "../soapservice/.env:/usr/src/app/.env"
     depends_on:
       - soapServiceDB
   soapServiceDB:
@@ -60,7 +59,7 @@ services:
     build: ../restservice
     restart: always
     ports:
-      - "3002:3002"
+      - "3001:3001"
     depends_on:
       - restServiceDB
       - cacheService
@@ -81,7 +80,6 @@ services:
     restart: always
     ports:
       - '6379:6379'
-    command: redis-server --save 20 1 --loglevel warning --requirepass P8MgJgq0wBze 
+    command: redis-server --save 20 1 --loglevel warning --requirepass P8MgJgq0wBze
     volumes:
       - '../restservice/cache:/data'
-

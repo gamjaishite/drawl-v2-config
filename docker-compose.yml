@@ -41,9 +41,10 @@ services:
     build: ../soapservice
     restart: always
     ports:
-      - "8082:8082"
+      - "8083:8083"
     depends_on:
-      - soapServiceDB
+      soapServiceDB:
+        condition: service_healthy
   soapServiceDB:
     image: mysql:latest
     restart: always
@@ -55,6 +56,10 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD_SOAP}
       MYSQL_DATABASE: ${MYSQL_DATABASE_SOAP}
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
   restservice:
     build: ../restservice
     restart: always

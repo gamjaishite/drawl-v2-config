@@ -1,6 +1,6 @@
 services:
-  phpService:
-    image: tubes-1:latest
+  phpservice:
+    build: ../drawl
     volumes:
       - ../drawl/src/server:/var/www
       - ../drawl/src/public:/var/www/html
@@ -27,22 +27,24 @@ services:
     restart: always
     ports:
       - "8080:8080"
-  # clientSPA:
-  #   image: clientspa:latest
-  #   restart: always
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - '../clientspa:/app'
-  #     - '/app/node_modules'
-  #   tty: true
-  # soapService:
-  #   image: soapservice:latest
-  #   restart: always
-  #   ports:
-  #     - "8082:8082"
-  #   depends_on:
-  #     - soapServiceDB
+  clientspa:
+    build: ../clientspa
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - '../clientspa:/app'
+      - '/app/node_modules'
+    tty: true
+  soapservice:
+    build: ../soapservice
+    restart: always
+    ports:
+      - "8082:8082"
+    volumes:
+      - "../soapservice/.env:/usr/src/app/.env"
+    depends_on:
+      - soapServiceDB
   soapServiceDB:
     image: mysql:latest
     restart: always
@@ -54,6 +56,14 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD_SOAP}
       MYSQL_DATABASE: ${MYSQL_DATABASE_SOAP}
+  restservice:
+    build: ../restservice
+    restart: always
+    ports:
+      - "3002:3002"
+    depends_on:
+      - restServiceDB
+      - cacheService
   restServiceDB:
     image: postgres:latest
     restart: always
@@ -66,4 +76,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER_REST}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_REST}
       POSTGRES_DB: ${POSTGRES_DB_REST}
+  cacheService:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass P8MgJgq0wBze 
+    volumes:
+      - '../restservice/cache:/data'
 

@@ -1,0 +1,88 @@
+services:
+  phpservice:
+    build: ../drawl
+    volumes:
+      - ../drawl/src/server:/var/www
+      - ../drawl/src/public:/var/www/html
+    ports:
+      - 8008:80
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - phpServiceDB
+  phpServiceDB:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - "../drawl/db:/var/lib/postgresql/data"
+      - "../drawl/src/migration:/docker-entrypoint-initdb.d/"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_PHP}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PHP}
+      POSTGRES_DB: ${POSTGRES_DB_PHP}
+  adminer:
+    image: adminer:latest
+    restart: always
+    ports:
+      - "8080:8080"
+  clientspa:
+    build: ../clientspa
+    restart: always
+    ports:
+      - "3000:3000"
+    tty: true
+  soapservice:
+    build: ../soapservice
+    restart: always
+    ports:
+      - "8083:8083"
+    depends_on:
+      soapServiceDB:
+        condition: service_healthy
+  soapServiceDB:
+    image: mysql:latest
+    restart: always
+    volumes:
+      - "../soapservice/db:/var/lib/mysql"
+      - "../soapservice/schema:/docker-entrypoint-initdb.d"
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD_SOAP}
+      MYSQL_DATABASE: ${MYSQL_DATABASE_SOAP}
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+  restservice:
+    build: ../restservice
+    restart: always
+    ports:
+      - "3001:3001"
+    depends_on:
+      - restServiceDB
+      - cacheService
+    volumes:
+      - "../restservice/public:/app/public"
+  restServiceDB:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - "../restservice/db:/var/lib/postgresql/data"
+      - "../restservice/schema:/docker-entrypoint-initdb.d/"
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_REST}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_REST}
+      POSTGRES_DB: ${POSTGRES_DB_REST}
+  cacheService:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass P8MgJgq0wBze
+    volumes:
+      - '../restservice/cache:/data'

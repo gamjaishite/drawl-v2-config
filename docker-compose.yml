@@ -68,6 +68,8 @@ services:
     depends_on:
       - restServiceDB
       - cacheService
+    volumes:
+      - "../restservice/public:/app/public"
   restServiceDB:
     image: postgres:latest
     restart: always

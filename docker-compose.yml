@@ -32,10 +32,6 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    volumes:
-      - '../clientspa:/app'
-      - '/app/node_modules'
-      - '/app/dist'
     tty: true
   soapservice:
     build: ../soapservice
